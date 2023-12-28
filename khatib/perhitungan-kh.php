@@ -66,11 +66,15 @@ if ($user_role == 'admin') {
 								<?php foreach ($kriteria_kh as $key): ?>
 									<td>
 										<?php
+										$id_alternatif = mysqli_real_escape_string($koneksi, $keys['id_alternatif']);
+										$id_kriteria_kh = mysqli_real_escape_string($koneksi, $key['id_kriteria_kh']);
+										
 										$q4 = mysqli_query($koneksi, "SELECT sub_kriteria.nilai FROM penilaian_kh 
 										JOIN sub_kriteria ON penilaian_kh.id_sub_kriteria = sub_kriteria.id_sub_kriteria 
-										WHERE penilaian_kh.id_alternatif='{$keys['id_alternatif']}' 
-										AND penilaian_kh.id_kriteria_kh='{$key['id_kriteria_kh']}'");
-		 
+										WHERE penilaian_kh.id_alternatif='{$id_alternatif}' 
+										AND penilaian_kh.id_kriteria_kh='{$id_kriteria_kh}'");
+										
+
 
 										$data_kh = mysqli_fetch_array($q4);
 										if ($data_kh !== null) {
@@ -123,19 +127,33 @@ if ($user_role == 'admin') {
 								<?php foreach ($kriteria_kh as $key): ?>
 									<td>
 										<?php
-										$q4 = mysqli_query($koneksi, "SELECT sub_kriteria.nilai FROM penilaian_kh JOIN sub_kriteria ON penilaian_kh.nilai=sub_kriteria.id_sub_kriteria WHERE penilaian_kh.id_alternatif='{$keys['id_alternatif']}' AND penilaian_kh.id_kriteria_kh='{$key['id_kriteria_kh']}'");
+										$q4 = mysqli_query($koneksi, "SELECT sub_kriteria.nilai FROM penilaian_kh JOIN sub_kriteria ON penilaian_kh.nilai_kh=sub_kriteria.id_sub_kriteria WHERE penilaian_kh.id_alternatif='{$keys['id_alternatif']}' AND penilaian_kh.id_kriteria_kh='{$key['id_kriteria_kh']}'");
 										$dt1 = mysqli_fetch_array($q4);
 
-										$q5 = mysqli_query($koneksi, "SELECT MAX(sub_kriteria.nilai) as max, MIN(sub_kriteria.nilai) as min, kriteria_kh.type_kh FROM penilaian_kh JOIN sub_kriteria ON penilaian_kh.nilai=sub_kriteria.id_sub_kriteria JOIN kriteria_kh ON penilaian_kh.id_kriteria_kh=kriteria_kh.id_kriteria_kh WHERE penilaian_kh.id_kriteria_kh='{$key['id_kriteria_kh']}'");
+										$q5 = mysqli_query($koneksi, "SELECT MAX(sub_kriteria.nilai) as max, MIN(sub_kriteria.nilai) as min, kriteria_kh.type_kh FROM penilaian_kh JOIN sub_kriteria ON penilaian_kh.nilai_kh=sub_kriteria.id_sub_kriteria JOIN kriteria_kh ON penilaian_kh.id_kriteria_kh=kriteria_kh.id_kriteria_kh WHERE penilaian_kh.id_kriteria_kh='{$key['id_kriteria_kh']}'");
 										$dt2 = mysqli_fetch_array($q5);
-										if ($dt2['type_kh'] == "Benefit") {
-											echo $dt1['nilai'] / $dt2['max'];
+
+										// Check if $dt1 and $dt2 are not null before accessing their array offsets
+										if ($dt1 !== null && $dt2 !== null) {
+											// Check if $dt2['max'] is not zero before performing division
+											if ($dt2['type_kh'] == "Benefit" && $dt2['max'] != 0) {
+												echo $dt1['nilai'] / $dt2['max'];
+											} else {
+												// Add additional check to prevent division by zero
+												if ($dt1['nilai'] != 0) {
+													echo $dt2['min'] / $dt1['nilai'];
+												} else {
+													echo "N/A"; // Handle division by zero gracefully, you can customize this part based on your requirements
+												}
+											}
 										} else {
-											echo $dt2['min'] / $dt1['nilai'];
+											echo "N/A"; // Handle the case where $dt1 or $dt2 is null
 										}
 										?>
 									</td>
 								<?php endforeach ?>
+
+
 							</tr>
 							<?php
 							$no++;
@@ -215,27 +233,41 @@ if ($user_role == 'admin') {
 									$nilai_v = 0;
 									foreach ($kriteria_kh as $key):
 										$bobot = $key['bobot_kh'];
-										$q4 = mysqli_query($koneksi, "SELECT sub_kriteria.nilai FROM penilaian_kh JOIN sub_kriteria ON penilaian_kh.nilai=sub_kriteria.id_sub_kriteria WHERE penilaian_kh.id_alternatif='{$keys['id_alternatif']}' AND penilaian_kh.id_kriteria_kh='{$key['id_kriteria_kh']}'");
+										$q4 = mysqli_query($koneksi, "SELECT sub_kriteria.nilai FROM penilaian_kh JOIN sub_kriteria ON penilaian_kh.nilai_kh=sub_kriteria.id_sub_kriteria WHERE penilaian_kh.id_alternatif='{$keys['id_alternatif']}' AND penilaian_kh.id_kriteria_kh='{$key['id_kriteria_kh']}'");
 										$dt1 = mysqli_fetch_array($q4);
 
-										$q5 = mysqli_query($koneksi, "SELECT MAX(sub_kriteria.nilai) as max, MIN(sub_kriteria.nilai) as min, kriteria_kh.type_kh FROM penilaian_kh JOIN sub_kriteria ON penilaian_kh.nilai=sub_kriteria.id_sub_kriteria JOIN kriteria_kh ON penilaian_kh.id_kriteria_kh=kriteria_kh.id_kriteria_kh WHERE penilaian_kh.id_kriteria_kh='{$key['id_kriteria_kh']}'");
+										$q5 = mysqli_query($koneksi, "SELECT MAX(sub_kriteria.nilai) as max, MIN(sub_kriteria.nilai) as min, kriteria_kh.type_kh FROM penilaian_kh JOIN sub_kriteria ON penilaian_kh.nilai_kh=sub_kriteria.id_sub_kriteria JOIN kriteria_kh ON penilaian_kh.id_kriteria_kh=kriteria_kh.id_kriteria_kh WHERE penilaian_kh.id_kriteria_kh='{$key['id_kriteria_kh']}'");
 										$dt2 = mysqli_fetch_array($q5);
-										if ($dt2['type_kh'] == "Benefit") {
-											$nilai_r = $dt1['nilai'] / $dt2['max'];
+
+										// Check if $dt1 and $dt2 are not null before accessing their array offsets
+										if ($dt1 !== null && $dt2 !== null) {
+											// Check if $dt2['max'] is not null and not zero before performing division
+											if ($dt2['type_kh'] == "Benefit" && isset($dt2['max']) && $dt2['max'] != 0) {
+												$nilai_r = $dt1['nilai'] / $dt2['max'];
+											} else {
+												// Add additional check to prevent division by zero
+												if (isset($dt1['nilai']) && $dt1['nilai'] != 0) {
+													$nilai_r = $dt2['min'] / $dt1['nilai'];
+												} else {
+													$nilai_r = 0; // or any default value you prefer
+												}
+											}
+											$nilai_penjumlahan = $bobot * $nilai_r;
+											$nilai_v += $nilai_penjumlahan;
+											echo "(" . $bobot . "x" . $nilai_r . ") ";
 										} else {
-											$nilai_r = $dt2['min'] / $dt1['nilai'];
+											echo "(N/A) "; // Handle the case where $dt1 or $dt2 is null
 										}
-										$nilai_penjumlahan = $bobot * $nilai_r;
-										$nilai_v += $nilai_penjumlahan;
-										echo "(" . $bobot . "x" . $nilai_r . ") ";
 									endforeach ?>
 								</td>
+
 								<td>
 									<?php
 									echo $nilai_v;
-									mysqli_query($koneksi, "INSERT INTO hasil_kh (id_hasil_kh, id_alternatif, nilai) VALUES ('', '{$keys['id_alternatif']}', '$nilai_v')");
+									mysqli_query($koneksi, "INSERT INTO hasil_kh (id_alternatif, nilai_kh) VALUES ('{$keys['id_alternatif']}', '$nilai_v')");
 									?>
 								</td>
+
 							</tr>
 							<?php
 							$no++;

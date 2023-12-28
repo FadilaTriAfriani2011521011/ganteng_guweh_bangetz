@@ -213,7 +213,7 @@ endif;
 												?>
 												<input type="text" name="id_alternatif" value="<?= $data['id_alternatif'] ?>"
 													hidden>
-												
+
 												<div class="form-group">
 													<label class="font-weight-bold">(
 														<?= $d['kode_kriteria_kh'] ?>)
